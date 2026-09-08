@@ -1,8 +1,8 @@
 # uae-einvoice-mcp
 
-MCP server for **UAE e-invoicing / PINT AE** helpers — validate TRN/TIN identifiers, structurally check invoice fields, and fetch the mandate timeline.
+MCP server for **UAE e-invoicing / PINT AE** — TRN/TIN validation, structural compliance, the **51-field mandatory checklist**, UBL XML stub generation, and mandate timeline helpers.
 
-Built with the MCP TypeScript SDK v2 (`@modelcontextprotocol/server`) over **stdio**. Free to run locally; no API keys required for v0.1.
+Built with the MCP TypeScript SDK v2 (`@modelcontextprotocol/server`) over **stdio**. Free to run locally; no API keys required for v0.2.
 
 > Informational tooling only — not legal or tax advice, and not a substitute for Accredited Service Provider (ASP) XSD/Schematron validation or live FTA register checks.
 
@@ -15,7 +15,9 @@ UAE e-invoicing (Peppol + PINT AE) forces ERP and finance teams to get dozens of
 | Tool | What it does |
 | --- | --- |
 | `lookup_business_trn` | Validates 15-digit TRN or 10-digit TIN format, UAE `1…` prefix, Peppol AE:TIN check digit, and returns `0235:<TIN>` |
-| `check_invoice_compliance` | Structural PINT AE field checks (parties, totals math, tax breakdown, lines) with errors/warnings/score |
+| `check_invoice_compliance` | Structural checks (parties, totals math, tax breakdown, lines) with errors/warnings/score |
+| `check_pint_ae_fields` | Full **51-field** mandatory matrix: present / missing / invalid / N/A + gaps |
+| `generate_pint_ae_xml` | Builds a UBL 2.1 PINT AE-shaped Invoice/CreditNote XML stub (optional `strict` mode) |
 | `get_einvoicing_requirements` | Mandate phases (large / SME / government), technical baseline, and next actions |
 
 ## Requirements
@@ -48,15 +50,9 @@ npm run selfcheck
 npm run inspector
 ```
 
-Or:
-
-```bash
-npx @modelcontextprotocol/inspector node dist/index.js
-```
+Paste fixtures from `examples/compliant-invoice.json` or `examples/broken-invoice.json` into the tools.
 
 ### Cursor / Claude Desktop (stdio)
-
-Add to your MCP config (path adjusted to your clone):
 
 ```json
 {
@@ -69,31 +65,16 @@ Add to your MCP config (path adjusted to your clone):
 }
 ```
 
-After `npm link` / publish:
+## Suggested test flow
 
-```json
-{
-  "mcpServers": {
-    "uae-einvoice": {
-      "command": "npx",
-      "args": ["-y", "uae-einvoice-mcp"]
-    }
-  }
-}
-```
-
-## Example: `lookup_business_trn`
-
-Input: `{ "taxId": "123456789012345" }`  
-Output includes normalized digits, derived TIN, Peppol participant ID, and checksum errors if any.
-
-## Example: `check_invoice_compliance`
-
-Pass seller/buyer names + tax IDs, `issueDate`, AED currency, monetary totals, tax breakdown, and at least one line. The tool returns `compliant`, `score`, `findings[]`, and derived Peppol IDs.
+1. `check_pint_ae_fields` with `examples/compliant-invoice.json`
+2. `generate_pint_ae_xml` with the same payload (`strict: true` should succeed)
+3. `generate_pint_ae_xml` with `examples/broken-invoice.json` and `strict: true` (should refuse)
 
 ## Roadmap
 
-- [ ] Deeper PINT AE code-list coverage (UOM, tax categories, BT field codes)
+- [x] 51-field checklist + PINT AE XML stub generation
+- [ ] Deeper code-list coverage (UOM, exemption reason codes)
 - [ ] Optional HTTP + API-key transport for hosted / paid tier
 - [ ] Publish to npm and MCP directories
 

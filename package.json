@@ -1,7 +1,7 @@
 {
   "name": "uae-einvoice-mcp",
-  "version": "0.1.0",
-  "description": "MCP server for UAE e-invoicing / PINT AE compliance checks, TRN-TIN validation, and mandate requirements",
+  "version": "0.2.0",
+  "description": "MCP server for UAE e-invoicing / PINT AE: TRN validation, 51-field checklist, XML generation, mandate timeline",
   "type": "module",
   "main": "dist/index.js",
   "bin": {

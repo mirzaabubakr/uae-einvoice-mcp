@@ -1,56 +1,16 @@
+import type {
+  InvoiceDataInput,
+  InvoiceDocumentType,
+} from "./invoice-types.js";
 import { validateTaxId } from "./trn.js";
 
-export type InvoiceDocumentType = "tax_invoice" | "commercial_invoice" | "credit_note";
-
-export interface PartyInput {
-  legalName?: string;
-  trn?: string;
-  tin?: string;
-  countryCode?: string;
-  addressLine?: string;
-  cityOrEmirate?: string;
-  email?: string;
-  phone?: string;
-  peppolId?: string;
-}
-
-export interface InvoiceLineInput {
-  id?: string;
-  name?: string;
-  quantity?: number;
-  unitCode?: string;
-  netAmount?: number;
-  unitPrice?: number;
-  taxCategoryCode?: string;
-  taxPercent?: number;
-}
-
-export interface TaxBreakdownInput {
-  taxableAmount?: number;
-  taxAmount?: number;
-  taxCategoryCode?: string;
-  taxPercent?: number;
-  exemptionReason?: string;
-}
-
-export interface InvoiceDataInput {
-  documentType?: InvoiceDocumentType;
-  invoiceNumber?: string;
-  issueDate?: string;
-  currencyCode?: string;
-  customizationId?: string;
-  profileId?: string;
-  typeCode?: string;
-  seller?: PartyInput;
-  buyer?: PartyInput;
-  lineNetTotal?: number;
-  taxExclusiveTotal?: number;
-  taxTotal?: number;
-  taxInclusiveTotal?: number;
-  payableAmount?: number;
-  taxBreakdown?: TaxBreakdownInput[];
-  lines?: InvoiceLineInput[];
-}
+export type {
+  InvoiceDataInput,
+  InvoiceDocumentType,
+  InvoiceLineInput,
+  PartyInput,
+  TaxBreakdownInput,
+} from "./invoice-types.js";
 
 export type FindingSeverity = "error" | "warning" | "info";
 
@@ -77,7 +37,7 @@ export interface ComplianceResult {
 
 const EXPECTED_CUSTOMIZATION_ID = "urn:peppol:pint:billing-1@ae-1";
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-const TAX_CATEGORIES = new Set(["S", "Z", "E", "O", "AE"]);
+const TAX_CATEGORIES = new Set(["S", "Z", "E", "O", "AE", "G"]);
 
 function add(
   findings: ComplianceFinding[],
@@ -89,17 +49,15 @@ function add(
   findings.push({ code, severity, field, message });
 }
 
-function resolveTin(party: PartyInput | undefined): {
+function resolveTin(party: InvoiceDataInput["seller"]): {
   tin: string | null;
   findings: ComplianceFinding[];
-  prefix: string;
 } {
   const findings: ComplianceFinding[] = [];
-  const prefix = "party";
-  if (!party) return { tin: null, findings, prefix };
+  if (!party) return { tin: null, findings };
 
   const raw = party.tin ?? party.trn;
-  if (!raw) return { tin: null, findings, prefix };
+  if (!raw) return { tin: null, findings };
 
   const result = validateTaxId(raw);
   if (!result.valid) {
@@ -112,7 +70,7 @@ function resolveTin(party: PartyInput | undefined): {
       });
     }
   }
-  return { tin: result.tin, findings, prefix };
+  return { tin: result.tin, findings };
 }
 
 function approxEqual(a: number, b: number, epsilon = 0.02): boolean {
@@ -124,7 +82,6 @@ export function checkInvoiceCompliance(invoice: InvoiceDataInput): ComplianceRes
   const documentType: InvoiceDocumentType = invoice.documentType ?? "tax_invoice";
   const isTaxDoc = documentType === "tax_invoice" || documentType === "credit_note";
 
-  // --- Document header ---
   if (!invoice.invoiceNumber?.trim()) {
     add(findings, "error", "INV_NUMBER_MISSING", "invoiceNumber", "Invoice number (cbc:ID) is required.");
   }
@@ -190,7 +147,16 @@ export function checkInvoiceCompliance(invoice: InvoiceDataInput): ComplianceRes
     );
   }
 
-  // --- Seller ---
+  if (documentType === "credit_note" && !invoice.billingReference?.trim()) {
+    add(
+      findings,
+      "warning",
+      "CREDIT_REF_MISSING",
+      "billingReference",
+      "Credit notes should reference the original invoice number.",
+    );
+  }
+
   if (!invoice.seller?.legalName?.trim()) {
     add(findings, "error", "SELLER_NAME", "seller.legalName", "Seller legal name is mandatory.");
   }
@@ -245,7 +211,6 @@ export function checkInvoiceCompliance(invoice: InvoiceDataInput): ComplianceRes
     }
   }
 
-  // --- Buyer ---
   if (!invoice.buyer?.legalName?.trim()) {
     add(findings, "error", "BUYER_NAME", "buyer.legalName", "Buyer legal name is mandatory.");
   }
@@ -265,7 +230,6 @@ export function checkInvoiceCompliance(invoice: InvoiceDataInput): ComplianceRes
     );
   }
 
-  // --- Totals ---
   const requiredTotals: Array<keyof InvoiceDataInput> = [
     "taxExclusiveTotal",
     "taxInclusiveTotal",
@@ -296,7 +260,6 @@ export function checkInvoiceCompliance(invoice: InvoiceDataInput): ComplianceRes
     );
   }
 
-  // --- Tax breakdown ---
   if (isTaxDoc) {
     if (!invoice.taxBreakdown?.length) {
       add(
@@ -337,11 +300,7 @@ export function checkInvoiceCompliance(invoice: InvoiceDataInput): ComplianceRes
             `Uncommon tax category "${row.taxCategoryCode}" — verify against PINT AE code list.`,
           );
         }
-        if (
-          (row.taxCategoryCode === "E" || row.taxCategoryCode === "Z") &&
-          !row.exemptionReason?.trim() &&
-          row.taxCategoryCode === "E"
-        ) {
+        if (row.taxCategoryCode === "E" && !row.exemptionReason?.trim() && !row.exemptionReasonCode?.trim()) {
           add(
             findings,
             "warning",
@@ -363,7 +322,6 @@ export function checkInvoiceCompliance(invoice: InvoiceDataInput): ComplianceRes
     }
   }
 
-  // --- Lines ---
   if (!invoice.lines?.length) {
     add(findings, "error", "LINES_MISSING", "lines", "At least one invoice line is required.");
   } else {
@@ -418,8 +376,7 @@ export function checkInvoiceCompliance(invoice: InvoiceDataInput): ComplianceRes
 
   const errors = findings.filter((f) => f.severity === "error");
   const warnings = findings.filter((f) => f.severity === "warning");
-  const maxScore = 100;
-  const score = Math.max(0, maxScore - errors.length * 12 - warnings.length * 4);
+  const score = Math.max(0, 100 - errors.length * 12 - warnings.length * 4);
   const compliant = errors.length === 0;
 
   const summary = compliant
