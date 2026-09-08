@@ -93,8 +93,8 @@ See also `.cursor/mcp.json.example`.
 - [x] 51-field checklist + PINT AE XML stub generation
 - [ ] Deeper code-list coverage (UOM, exemption reason codes)
 - [ ] Optional HTTP + API-key transport for hosted / paid tier
-- [x] Publish to npm (`uae-einvoice-mcp@0.2.0`)
-- [ ] List in MCP directories
+- [x] Publish to npm (`uae-einvoice-mcp@0.2.1`)
+- [ ] List in MCP registry (`mcp-publisher publish`)
 
 ## License
 

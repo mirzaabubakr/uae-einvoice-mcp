@@ -1,11 +1,20 @@
 {
   "name": "uae-einvoice-mcp",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "MCP server for UAE e-invoicing / PINT AE: TRN validation, 51-field checklist, XML generation, mandate timeline",
+  "mcpName": "io.github.mirzaabubakr/uae-einvoice-mcp",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
     "uae-einvoice-mcp": "dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mirzaabubakr/uae-einvoice-mcp.git"
+  },
+  "homepage": "https://github.com/mirzaabubakr/uae-einvoice-mcp",
+  "bugs": {
+    "url": "https://github.com/mirzaabubakr/uae-einvoice-mcp/issues"
   },
   "files": [
     "dist",
