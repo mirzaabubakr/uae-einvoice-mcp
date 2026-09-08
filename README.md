@@ -54,6 +54,21 @@ Paste fixtures from `examples/compliant-invoice.json` or `examples/broken-invoic
 
 ### Cursor / Claude Desktop (stdio)
 
+Published package (recommended):
+
+```json
+{
+  "mcpServers": {
+    "uae-einvoice": {
+      "command": "npx",
+      "args": ["-y", "uae-einvoice-mcp"]
+    }
+  }
+}
+```
+
+Local checkout:
+
 ```json
 {
   "mcpServers": {
@@ -64,6 +79,8 @@ Paste fixtures from `examples/compliant-invoice.json` or `examples/broken-invoic
   }
 }
 ```
+
+See also `.cursor/mcp.json.example`.
 
 ## Suggested test flow
 
@@ -76,7 +93,8 @@ Paste fixtures from `examples/compliant-invoice.json` or `examples/broken-invoic
 - [x] 51-field checklist + PINT AE XML stub generation
 - [ ] Deeper code-list coverage (UOM, exemption reason codes)
 - [ ] Optional HTTP + API-key transport for hosted / paid tier
-- [ ] Publish to npm and MCP directories
+- [x] Publish to npm (`uae-einvoice-mcp@0.2.0`)
+- [ ] List in MCP directories
 
 ## License
 

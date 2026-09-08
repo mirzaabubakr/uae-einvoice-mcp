@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "uae-einvoice": {
+      "command": "npx",
+      "args": ["-y", "uae-einvoice-mcp"]
+    }
+  }
+}

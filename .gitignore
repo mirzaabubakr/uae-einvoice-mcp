@@ -1,8 +1,32 @@
+# Dependencies & build
 node_modules/
 dist/
+
+# Logs & OS
 *.log
+npm-debug.log*
 .DS_Store
+Thumbs.db
+
+# Secrets / env
 .env
 .env.*
+!.env.example
+
+# Test / tooling caches
 coverage/
 .inspector/
+*.tsbuildinfo
+
+# Editor / local MCP config (personal paths, other servers)
+.cursor/*
+!.cursor/mcp.json.example
+.vscode/
+.idea/
+
+# Local scratch (gh binary, release drafts, etc.)
+.tmp-gh/
+*.tgz
+
+# Optional local generated samples (fixtures in examples/*.json are tracked)
+examples/*.xml
