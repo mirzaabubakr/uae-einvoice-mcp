@@ -1,0 +1,50 @@
+{
+  "invoiceData": {
+    "documentType": "tax_invoice",
+    "invoiceNumber": "INV-1001",
+    "issueDate": "2026-09-08",
+    "currencyCode": "AED",
+    "customizationId": "urn:peppol:pint:billing-1@ae-1",
+    "typeCode": "380",
+    "seller": {
+      "legalName": "Acme Trading LLC",
+      "tin": "1234567893",
+      "countryCode": "AE",
+      "addressLine": "Sheikh Zayed Road",
+      "cityOrEmirate": "Dubai",
+      "peppolId": "0235:1234567893"
+    },
+    "buyer": {
+      "legalName": "Buyer LLC",
+      "tin": "1876543216",
+      "countryCode": "AE",
+      "addressLine": "Al Maryah Island",
+      "cityOrEmirate": "Abu Dhabi"
+    },
+    "lineNetTotal": 1000,
+    "taxExclusiveTotal": 1000,
+    "taxTotal": 50,
+    "taxInclusiveTotal": 1050,
+    "payableAmount": 1050,
+    "taxBreakdown": [
+      {
+        "taxableAmount": 1000,
+        "taxAmount": 50,
+        "taxCategoryCode": "S",
+        "taxPercent": 5
+      }
+    ],
+    "lines": [
+      {
+        "id": "1",
+        "name": "Consulting",
+        "quantity": 10,
+        "unitCode": "HUR",
+        "netAmount": 1000,
+        "unitPrice": 100,
+        "taxCategoryCode": "S",
+        "taxPercent": 5
+      }
+    ]
+  }
+}

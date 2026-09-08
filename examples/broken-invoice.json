@@ -1,0 +1,26 @@
+{
+  "invoiceData": {
+    "documentType": "tax_invoice",
+    "invoiceNumber": "INV-BAD-1",
+    "issueDate": "08/09/2026",
+    "currencyCode": "USD",
+    "seller": {
+      "legalName": "Acme Trading LLC",
+      "tin": "1234567890"
+    },
+    "buyer": {
+      "legalName": "Buyer LLC"
+    },
+    "taxExclusiveTotal": 1000,
+    "taxTotal": 50,
+    "taxInclusiveTotal": 1100,
+    "payableAmount": 1100,
+    "lines": [
+      {
+        "name": "Consulting",
+        "quantity": 10,
+        "netAmount": 1000
+      }
+    ]
+  }
+}
