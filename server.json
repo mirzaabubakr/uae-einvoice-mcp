@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.mirzaabubakr/uae-einvoice-mcp",
-  "description": "UAE e-invoicing MCP: TRN/TIN checks, 51-field PINT AE checklist, UBL XML stubs, mandate timeline.",
+  "description": "UAE e-invoicing MCP: TIN/TRN, 51-field checklist, scope, UBL XML, PINT AE Schematron.",
   "repository": {
     "url": "https://github.com/mirzaabubakr/uae-einvoice-mcp",
     "source": "github"
   },
-  "version": "0.2.1",
+  "version": "0.2.2",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "uae-einvoice-mcp",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "transport": {
         "type": "stdio"
       }

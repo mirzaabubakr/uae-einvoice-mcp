@@ -100,7 +100,7 @@ See also `.cursor/mcp.json.example`.
 - [x] Per-transaction scope helper (`check_einvoicing_scope`)
 - [x] Credit-note and non-AED fixtures + CI self-check
 - [ ] Optional HTTP + API-key transport for hosted / paid tier
-- [x] Publish to npm (`uae-einvoice-mcp@0.2.1`)
+- [x] Publish to npm (`uae-einvoice-mcp@0.2.2`)
 - [x] List in MCP registry (`io.github.mirzaabubakr/uae-einvoice-mcp`)
 
 ## License

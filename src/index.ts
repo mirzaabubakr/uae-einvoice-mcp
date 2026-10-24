@@ -154,7 +154,7 @@ function textResult(payload: unknown) {
 function createServer() {
   const server = new McpServer({
     name: "uae-einvoice-mcp",
-    version: "0.2.1",
+    version: "0.2.2",
   });
 
   server.registerTool(
