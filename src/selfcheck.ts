@@ -6,7 +6,9 @@ import { checkPintAeFields } from "./lib/checklist.js";
 import { checkInvoiceCompliance } from "./lib/compliance.js";
 import { COMMERCIAL_INVOICE_FIELDS, TAX_INVOICE_FIELDS } from "./lib/fields.js";
 import { getEinvoicingRequirements } from "./lib/requirements.js";
+import { checkEinvoicingScope } from "./lib/scope.js";
 import { computeTinCheckDigit, makeSampleTin, makeSampleTrn, validateTaxId } from "./lib/trn.js";
+import { validatePintAeXml } from "./lib/schematron.js";
 import { generatePintAeXml } from "./lib/xml.js";
 
 const sampleTin = makeSampleTin("23456789");
@@ -71,9 +73,56 @@ assert.equal(commercial.totalFields, 49);
 const reqs = getEinvoicingRequirements("all", 60_000_000);
 assert.equal(reqs.segment, "large");
 assert.ok(reqs.phases.length === 1);
+assert.equal(getEinvoicingRequirements("government").phases[0].aspAppointmentDeadline, "2027-03-31");
+
+const intra = checkEinvoicingScope({ transactionKind: "intra_tax_group", asOf: "2026-10-24" });
+assert.equal(intra.verdict, "excluded");
+assert.equal(intra.exclusion?.endsOn, "2029-01-01");
+const largeB2b = checkEinvoicingScope({
+  transactionKind: "b2b",
+  annualRevenueAed: 60_000_000,
+  asOf: "2026-10-24",
+});
+assert.equal(largeB2b.verdict, "voluntary_only");
+assert.equal(largeB2b.mandatoryFrom, "2027-01-01");
+assert.equal(checkEinvoicingScope({ transactionKind: "b2c" }).verdict, "out_of_scope");
+assert.equal(
+  checkEinvoicingScope({ transactionKind: "b2b", annualRevenueAed: 60_000_000, asOf: "2027-01-01" })
+    .verdict,
+  "mandatory",
+);
+
+function loadFixture(name: string) {
+  return JSON.parse(readFileSync(join(__dirname, "../examples", name), "utf8")).invoiceData;
+}
+
+const credit = loadFixture("credit-note.json");
+const creditCheck = checkPintAeFields(credit);
+assert.equal(creditCheck.complete, true, JSON.stringify(creditCheck.gaps, null, 2));
+const creditXml = generatePintAeXml(credit, { strict: true });
+assert.equal(creditXml.generated, true, JSON.stringify(creditXml.gaps, null, 2));
+assert.equal(creditXml.rootElement, "CreditNote");
+assert.ok(creditXml.xml?.includes("<CreditNote"));
+assert.ok(creditXml.xml?.includes("DL8.61.1.A"));
+assert.ok(creditXml.xml?.includes("INV-1001"));
+
+const usd = loadFixture("usd-invoice.json");
+const usdCheck = checkPintAeFields(usd);
+assert.equal(usdCheck.complete, true, JSON.stringify(usdCheck.gaps, null, 2));
+const usdXml = generatePintAeXml(usd, { strict: true });
+assert.equal(usdXml.generated, true, JSON.stringify(usdXml.gaps, null, 2));
+assert.ok(usdXml.xml?.includes("<cbc:DocumentCurrencyCode>USD</cbc:DocumentCurrencyCode>"));
+assert.ok(usdXml.xml?.includes("<cbc:TaxCurrencyCode>AED</cbc:TaxCurrencyCode>"));
+assert.ok(usdXml.xml?.includes("aedtotal-incl-vat"));
+
+const notUbl = await validatePintAeXml("<NotInvoice/>");
+assert.equal(notUbl.valid, false);
+assert.ok(notUbl.parseError?.includes("Invoice or CreditNote"));
 
 console.log("All self-checks passed.");
 console.log("Sample TIN:", sampleTin);
 console.log("Compliance score:", good.score);
 console.log("Checklist completion %:", checklist.completionPercent);
 console.log("XML bytes:", xml.xml?.length);
+console.log("Credit note XML bytes:", creditXml.xml?.length);
+console.log("USD invoice XML bytes:", usdXml.xml?.length);

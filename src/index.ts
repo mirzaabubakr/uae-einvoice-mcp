@@ -5,6 +5,8 @@ import * as z from "zod";
 import { checkPintAeFields } from "./lib/checklist.js";
 import { checkInvoiceCompliance } from "./lib/compliance.js";
 import { getEinvoicingRequirements } from "./lib/requirements.js";
+import { readXmlInput, validatePintAeXml } from "./lib/schematron.js";
+import { checkEinvoicingScope } from "./lib/scope.js";
 import { makeSampleTin, validateTaxId } from "./lib/trn.js";
 import { generatePintAeXml } from "./lib/xml.js";
 
@@ -152,7 +154,7 @@ function textResult(payload: unknown) {
 function createServer() {
   const server = new McpServer({
     name: "uae-einvoice-mcp",
-    version: "0.2.0",
+    version: "0.2.1",
   });
 
   server.registerTool(
@@ -218,10 +220,23 @@ function createServer() {
   );
 
   server.registerTool(
+    "validate_pint_ae_xml",
+    {
+      description:
+        "Validate a UBL Invoice or CreditNote against the official PINT AE 1.0.4 Schematron (shared PINT rules + UAE rules) published by OpenPeppol. Returns failed rule IDs, messages and XPath locations. First call downloads and compiles the rules (~5 s); later calls take milliseconds. Does not perform XSD schema or signature validation.",
+      inputSchema: z.object({
+        xml: z.string().optional().describe("The XML document text"),
+        path: z.string().optional().describe("Path to an XML file (alternative to xml)"),
+      }),
+    },
+    async ({ xml, path }) => textResult(await validatePintAeXml(await readXmlInput(xml, path))),
+  );
+
+  server.registerTool(
     "get_einvoicing_requirements",
     {
       description:
-        "Return the UAE e-invoicing mandate timeline, technical baseline (PINT AE / Peppol / ASP), and next actions for a business segment (large, sme, government, or all). Optional annual revenue (AED) auto-selects large vs SME.",
+        "Return the UAE e-invoicing mandate timeline, excluded transactions (MD 197 of 2026), recent amendments, technical baseline (PINT AE / Peppol / ASP), and next actions. Optional annual revenue (AED) auto-selects large vs SME.",
       inputSchema: z.object({
         businessType: z
           .enum(["large", "sme", "government", "all"])
@@ -236,6 +251,36 @@ function createServer() {
     },
     async ({ businessType, annualRevenueAed }) =>
       textResult(getEinvoicingRequirements(businessType ?? "all", annualRevenueAed)),
+  );
+
+  server.registerTool(
+    "check_einvoicing_scope",
+    {
+      description:
+        "Decide whether a UAE supply must be e-invoiced: B2B/B2G/B2C, intra-Tax-Group (24-month exclusion from 1 Jan 2027), sovereign government, air passenger/cargo, or VAT-exempt/zero-rated financial services. Returns verdict, dates, and whether voluntary issuance is allowed.",
+      inputSchema: z.object({
+        transactionKind: z
+          .enum([
+            "b2b",
+            "b2g",
+            "b2c",
+            "intra_tax_group",
+            "sovereign_government",
+            "air_passenger",
+            "air_cargo",
+            "financial_exempt_or_zero",
+          ])
+          .describe("Supply type to evaluate"),
+        annualRevenueAed: z
+          .number()
+          .nonnegative()
+          .optional()
+          .describe("Seller annual revenue; selects large (≥50M) vs SME dates"),
+        entityType: z.enum(["business", "government"]).optional().describe("Defaults to business"),
+        asOf: z.string().optional().describe("ISO date YYYY-MM-DD; defaults to today"),
+      }),
+    },
+    async (input) => textResult(checkEinvoicingScope(input)),
   );
 
   return server;
