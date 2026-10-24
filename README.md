@@ -1,5 +1,7 @@
 # uae-einvoice-mcp
 
+[![Uae Einvoice MCP server](https://mcprush.com/badge/uae-einvoice-mcp/card.svg)](https://mcprush.com/to/uae-einvoice-mcp?ref=badge)
+
 MCP server for **UAE e-invoicing / PINT AE** — TRN/TIN validation, structural compliance, the **51-field mandatory checklist**, UBL XML stub generation, and mandate timeline helpers.
 
 Built with the MCP TypeScript SDK v2 (`@modelcontextprotocol/server`) over **stdio**. Free to run locally; no API keys required for v0.2.
