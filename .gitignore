@@ -16,6 +16,7 @@ Thumbs.db
 # Test / tooling caches
 coverage/
 .inspector/
+.cache/
 *.tsbuildinfo
 
 # Editor / local MCP config (personal paths, other servers)
