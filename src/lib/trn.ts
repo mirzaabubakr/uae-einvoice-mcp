@@ -1,15 +1,24 @@
 /**
  * UAE Tax Registration Number (TRN) and Tax Identification Number (TIN) helpers.
  *
- * - TRN: 15 digits issued by the FTA for VAT-registered entities
+ * - TRN: 15 digits issued by the FTA for VAT-registered entities; PINT AE rule ibr-132-ae
+ *   requires it to start with 1 and end with 03
  * - TIN: first 10 digits of the TRN; used as the Peppol participant identifier
- *   under scheme 0235 (format: 0235:TIN)
+ *   under scheme 0235 (format: 0235:TIN); ibr-148-ae requires the form 1XXXXXXXXX
  *
- * TIN structure (Peppol AE:TIN / ISO 6523 scheme 0235):
+ * TIN structure (Peppol Participant Identifier Schemes v9.7, AE:TIN / ISO 6523 scheme 0235):
  * - digit 1: UAE country identifier — must be "1"
  * - digits 2–9: FTA business identifier
  * - digit 10: Luhn check digit (odd-placed digits from the left ×2)
  */
+
+export function isTrnFormat(value: string): boolean {
+  return /^1\d{12}03$/.test(value);
+}
+
+export function isTinFormat(value: string): boolean {
+  return /^1\d{9}$/.test(value);
+}
 
 export type IdentifierKind = "trn" | "tin" | "unknown";
 
@@ -102,12 +111,16 @@ export function validateTaxId(raw: string): TrnValidationResult {
     );
   }
 
+  if (kind === "trn" && formatOk && !normalized.endsWith("03")) {
+    errors.push("A UAE VAT TRN must end with 03 (PINT AE rule ibr-132-ae).");
+  }
+
   let checksumOk: boolean | null = null;
   if (tinCandidate && /^\d{10}$/.test(tinCandidate)) {
     checksumOk = isValidTinChecksum(tinCandidate);
     if (!checksumOk) {
-      errors.push(
-        `TIN check digit is invalid (expected ${computeTinCheckDigit(tinCandidate.slice(0, 9))}, got ${tinCandidate[9]}).`,
+      warnings.push(
+        `TIN check digit does not match the Peppol AE:TIN Luhn description (expected ${computeTinCheckDigit(tinCandidate.slice(0, 9))}, got ${tinCandidate[9]}). PINT AE Schematron does not enforce it — confirm the number on EmaraTax.`,
       );
     }
   }
@@ -120,7 +133,6 @@ export function validateTaxId(raw: string): TrnValidationResult {
 
   const valid = errors.length === 0 && formatOk;
 
-  const tin = valid && tinCandidate ? tinCandidate : tinCandidate;
   const trn = kind === "trn" && formatOk ? normalized : null;
 
   return {
@@ -151,4 +163,9 @@ export function makeSampleTin(bodyEightDigits = "23456789"): string {
   }
   const nine = `1${bodyEightDigits}`;
   return `${nine}${computeTinCheckDigit(nine)}`;
+}
+
+/** Sample TRN for a sample TIN, following the official PINT AE examples (TIN + "01003"). */
+export function makeSampleTrn(tin = makeSampleTin()): string {
+  return `${tin}01003`;
 }

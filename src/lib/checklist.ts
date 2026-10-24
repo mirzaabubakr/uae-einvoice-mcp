@@ -1,25 +1,29 @@
-import { PINT_AE_FIELDS, type FieldStatus } from "./fields.js";
+import { CONDITIONAL_FIELDS, mandatoryFieldsFor, type FieldDef, type FieldStatus } from "./fields.js";
+import { resolveInvoice } from "./derive.js";
 import type { InvoiceDataInput } from "./invoice-types.js";
 
 export interface FieldCheckResult {
-  id: number;
+  no?: number;
   key: string;
+  term: string;
   name: string;
+  group: string;
+  cardinality: string;
   ublPath: string;
-  category: string;
-  requirement: string;
-  conditionNote?: string;
+  rules?: string[];
   status: FieldStatus;
   value?: string | number | boolean | null;
   note?: string;
-  countsTowardMandatory: boolean;
 }
 
 export interface ChecklistResult {
   documentType: string;
-  totalFields: 51;
-  mandatoryApplicable: number;
+  typeCode: string;
+  fieldList: "tax_invoice" | "commercial_invoice";
+  totalFields: number;
+  applicable: number;
   present: number;
+  derived: number;
   missing: number;
   invalid: number;
   notApplicable: number;
@@ -27,112 +31,71 @@ export interface ChecklistResult {
   completionPercent: number;
   summary: string;
   fields: FieldCheckResult[];
+  conditionalFields: FieldCheckResult[];
   gaps: FieldCheckResult[];
+  source: string;
   disclaimer: string;
 }
 
-function countsTowardMandatory(
-  requirement: string,
-  status: FieldStatus,
-  isTaxDoc: boolean,
-): boolean {
-  if (status === "not_applicable") return false;
-  if (requirement === "always") return true;
-  if (requirement === "tax_doc") return isTaxDoc;
-  // Conditional fields that are still applicable (present/missing/invalid)
-  return true;
+function toResult(def: FieldDef & { no?: number }, invoice: ReturnType<typeof resolveInvoice>): FieldCheckResult {
+  const res = def.evaluate(invoice);
+  return {
+    no: def.no,
+    key: def.key,
+    term: def.term,
+    name: def.name,
+    group: def.group,
+    cardinality: def.cardinality,
+    ublPath: def.ublPath,
+    rules: def.rules,
+    status: res.status,
+    value: res.value,
+    note: res.note,
+  };
 }
 
+const isGap = (f: FieldCheckResult) => f.status === "missing" || f.status === "invalid";
+
 export function checkPintAeFields(invoice: InvoiceDataInput): ChecklistResult {
-  const documentType = invoice.documentType ?? "tax_invoice";
-  const isTaxDoc = documentType === "tax_invoice" || documentType === "credit_note";
+  const r = resolveInvoice(invoice);
+  const defs = mandatoryFieldsFor(r);
+  const fields = defs.map((d) => toResult(d, r));
+  const conditionalFields = CONDITIONAL_FIELDS.map((d) => toResult(d, r)).filter(
+    (f) => f.status !== "not_applicable",
+  );
 
-  const fields: FieldCheckResult[] = PINT_AE_FIELDS.map((def) => {
-    const result = def.evaluate(invoice);
-    let status = result.status;
-
-    // Soften conditional "missing" into not_applicable when the condition
-    // evaluator already uses missing for "not provided" — for scoring we only
-    // treat always + tax_doc (+ conditional when marked missing but needed) as gaps.
-    // Conditional fields that evaluate to "missing" without an active condition
-    // are treated as not_applicable for completion % except when evaluator
-    // returned missing because the condition IS active (tax currency, exemption, etc.).
-    if (def.requirement === "conditional" && status === "missing") {
-      // Heuristic: if evaluate returned missing with a note saying Must/Required,
-      // keep as missing; otherwise treat optional-absent as not_applicable.
-      const active =
-        Boolean(result.note) ||
-        def.key === "taxCurrencyCode" ||
-        def.key === "taxTotalAed" ||
-        def.key === "taxBreakdown.exemptionReasonCode";
-      // For most soft conditionals (due date, trade name, contact, allowance),
-      // absence is OK unless business data implies they are needed.
-      if (
-        !active &&
-        [
-          "dueDate",
-          "buyerReference",
-          "periodStart",
-          "periodEnd",
-          "taxPointDate",
-          "seller.tradeName",
-          "seller.contact",
-          "buyer.tradeName",
-          "buyer.contact",
-          "allowanceTotal",
-          "chargeTotal",
-        ].includes(def.key)
-      ) {
-        status = "not_applicable";
-      }
-    }
-
-    const mandatory = countsTowardMandatory(def.requirement, status, isTaxDoc);
-
-    return {
-      id: def.id,
-      key: def.key,
-      name: def.name,
-      ublPath: def.ublPath,
-      category: def.category,
-      requirement: def.requirement,
-      conditionNote: def.conditionNote,
-      status,
-      value: result.value,
-      note: result.note,
-      countsTowardMandatory: mandatory,
-    };
-  });
-
-  const applicable = fields.filter((f) => f.countsTowardMandatory);
-  const present = applicable.filter((f) => f.status === "present").length;
-  const missing = applicable.filter((f) => f.status === "missing").length;
-  const invalid = applicable.filter((f) => f.status === "invalid").length;
-  const notApplicable = fields.filter((f) => f.status === "not_applicable").length;
-  const complete = missing === 0 && invalid === 0 && applicable.length > 0;
+  const applicable = fields.filter((f) => f.status !== "not_applicable");
+  const count = (s: FieldStatus) => applicable.filter((f) => f.status === s).length;
+  const present = count("present");
+  const derived = count("derived");
+  const gaps = [...fields, ...conditionalFields].filter(isGap);
+  const complete = gaps.length === 0 && applicable.length > 0;
   const completionPercent =
-    applicable.length === 0
-      ? 0
-      : Math.round((present / applicable.length) * 1000) / 10;
-
-  const gaps = applicable.filter((f) => f.status === "missing" || f.status === "invalid");
+    applicable.length === 0 ? 0 : Math.round(((present + derived) / applicable.length) * 1000) / 10;
+  const listLabel = r.fieldList === "tax_invoice" ? "Tax Invoice (51 fields)" : "Commercial Invoice (49 fields)";
 
   return {
-    documentType,
-    totalFields: 51,
-    mandatoryApplicable: applicable.length,
+    documentType: r.documentType,
+    typeCode: r.typeCode.value,
+    fieldList: r.fieldList,
+    totalFields: defs.length,
+    applicable: applicable.length,
     present,
-    missing,
-    invalid,
-    notApplicable,
+    derived,
+    missing: count("missing"),
+    invalid: count("invalid"),
+    notApplicable: fields.length - applicable.length,
     complete,
     completionPercent,
     summary: complete
-      ? `All ${applicable.length} applicable mandatory fields present (${completionPercent}%).`
-      : `${gaps.length} gap(s) across ${applicable.length} applicable fields (${completionPercent}% complete).`,
+      ? `All ${applicable.length} applicable fields of the MoF ${listLabel} list are filled (${derived} derived), and no conditional PINT AE field is missing.`
+      : `${gaps.length} gap(s) against the MoF ${listLabel} list and conditional PINT AE fields (${completionPercent}% of applicable list fields filled).`,
     fields,
+    conditionalFields,
     gaps,
+    source:
+      "MoF UAE Electronic Invoice Mandatory Fields v1.0 (23 Feb 2026); PINT AE Billing 1.0.4 business terms and Schematron rule IDs.",
     disclaimer:
-      "Working model of the 51-field UAE e-invoice matrix for tooling/demo use. Verify against the official MoF mandatory-fields document before production.",
+      "Field-level check of invoice JSON. 'derived' means generate_pint_ae_xml fills the value from other data. Validate the generated XML with validate_pint_ae_xml and your ASP before transmission.",
   };
 }
