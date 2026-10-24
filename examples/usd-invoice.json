@@ -1,0 +1,81 @@
+{
+  "invoiceData": {
+    "documentType": "tax_invoice",
+    "invoiceNumber": "INV-USD-1001",
+    "uuid": "b2c3d4e5-f6a7-4890-bcde-f01234567890",
+    "issueDate": "2026-09-08",
+    "dueDate": "2026-10-08",
+    "currencyCode": "USD",
+    "taxCurrencyCode": "AED",
+    "exchangeRate": 3.6725,
+    "typeCode": "380",
+    "transactionType": "00000001",
+    "paymentMeansCode": "30",
+    "paymentAccountId": "AE070331234567890123456",
+    "buyerReference": "PO-EX-220",
+    "seller": {
+      "legalName": "Acme Trading LLC",
+      "tradeName": "Acme",
+      "trn": "123456789301003",
+      "tin": "1234567893",
+      "legalRegistrationId": "CN-1234567",
+      "legalRegistrationType": "TL",
+      "legalRegistrationAuthority": "Dubai Department of Economy and Tourism",
+      "addressLine": "Sheikh Zayed Road",
+      "cityOrEmirate": "Dubai",
+      "countrySubdivision": "DXB",
+      "countryCode": "AE",
+      "contactName": "Fatima Al Blooshi",
+      "email": "billing@acme.ae",
+      "phone": "+97140000000"
+    },
+    "buyer": {
+      "legalName": "Buyer GmbH",
+      "tradeName": "Buyer",
+      "peppolId": "9930:DE123456789",
+      "addressLine": "Friedrichstrasse 1",
+      "cityOrEmirate": "Berlin",
+      "countrySubdivision": "BE",
+      "postalZone": "10117",
+      "countryCode": "DE",
+      "email": "ap@buyer.de"
+    },
+    "deliverTo": {
+      "addressLine": "Friedrichstrasse 1",
+      "cityOrEmirate": "Berlin",
+      "countrySubdivision": "BE",
+      "postalZone": "10117",
+      "countryCode": "DE"
+    },
+    "lineNetTotal": 1000,
+    "taxExclusiveTotal": 1000,
+    "taxTotal": 0,
+    "taxTotalAed": 0,
+    "totalWithVatAed": 3672.5,
+    "taxInclusiveTotal": 1000,
+    "payableAmount": 1000,
+    "taxBreakdown": [
+      {
+        "taxableAmount": 1000,
+        "taxAmount": 0,
+        "taxCategoryCode": "Z",
+        "taxPercent": 0
+      }
+    ],
+    "lines": [
+      {
+        "id": "1",
+        "name": "Consulting",
+        "description": "Export of ERP e-invoicing readiness consulting",
+        "quantity": 10,
+        "unitCode": "HUR",
+        "netAmount": 1000,
+        "unitPrice": 100,
+        "taxCategoryCode": "Z",
+        "taxPercent": 0,
+        "vatAmountAed": 0,
+        "lineAmountAed": 3672.5
+      }
+    ]
+  }
+}

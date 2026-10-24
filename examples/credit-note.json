@@ -1,0 +1,73 @@
+{
+  "invoiceData": {
+    "documentType": "credit_note",
+    "invoiceNumber": "CN-1001",
+    "uuid": "a1b2c3d4-e5f6-4789-abcd-ef0123456789",
+    "issueDate": "2026-09-20",
+    "currencyCode": "AED",
+    "typeCode": "381",
+    "transactionType": "00000000",
+    "paymentMeansCode": "30",
+    "paymentAccountId": "AE070331234567890123456",
+    "buyerReference": "PO-7781",
+    "billingReference": "INV-1001",
+    "billingReferenceDate": "2026-09-08",
+    "creditNoteReasonCode": "DL8.61.1.A",
+    "seller": {
+      "legalName": "Acme Trading LLC",
+      "tradeName": "Acme",
+      "trn": "123456789301003",
+      "tin": "1234567893",
+      "legalRegistrationId": "CN-1234567",
+      "legalRegistrationType": "TL",
+      "legalRegistrationAuthority": "Dubai Department of Economy and Tourism",
+      "addressLine": "Sheikh Zayed Road",
+      "cityOrEmirate": "Dubai",
+      "countrySubdivision": "DXB",
+      "countryCode": "AE",
+      "contactName": "Fatima Al Blooshi",
+      "email": "billing@acme.ae",
+      "phone": "+97140000000"
+    },
+    "buyer": {
+      "legalName": "Buyer LLC",
+      "tradeName": "Buyer",
+      "trn": "187654321601003",
+      "tin": "1876543216",
+      "legalRegistrationId": "CN-7654321",
+      "legalRegistrationType": "TL",
+      "legalRegistrationAuthority": "Abu Dhabi Department of Economic Development",
+      "addressLine": "Al Maryah Island",
+      "cityOrEmirate": "Abu Dhabi",
+      "countrySubdivision": "AUH",
+      "countryCode": "AE",
+      "email": "ap@buyer.ae"
+    },
+    "lineNetTotal": 1000,
+    "taxExclusiveTotal": 1000,
+    "taxTotal": 50,
+    "taxInclusiveTotal": 1050,
+    "payableAmount": 1050,
+    "taxBreakdown": [
+      {
+        "taxableAmount": 1000,
+        "taxAmount": 50,
+        "taxCategoryCode": "S",
+        "taxPercent": 5
+      }
+    ],
+    "lines": [
+      {
+        "id": "1",
+        "name": "Consulting",
+        "description": "Cancellation of ERP e-invoicing readiness consulting, September 2026",
+        "quantity": 10,
+        "unitCode": "HUR",
+        "netAmount": 1000,
+        "unitPrice": 100,
+        "taxCategoryCode": "S",
+        "taxPercent": 5
+      }
+    ]
+  }
+}
