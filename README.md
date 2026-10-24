@@ -18,7 +18,7 @@ UAE e-invoicing (Peppol + PINT AE) forces ERP and finance teams to get dozens of
 | `check_invoice_compliance` | Structural checks (parties, totals math, tax breakdown, lines) with errors/warnings/score |
 | `check_pint_ae_fields` | Full **51-field** mandatory matrix: present / missing / invalid / N/A + gaps |
 | `generate_pint_ae_xml` | Builds a UBL 2.1 PINT AE-shaped Invoice/CreditNote XML stub (optional `strict` mode) |
-| `get_einvoicing_requirements` | Mandate phases (large / SME / government), technical baseline, and next actions |
+| `get_einvoicing_requirements` | Mandate phases (large / SME / government), excluded transactions, recent MoF amendments, technical baseline, and next actions |
 
 ## Requirements
 

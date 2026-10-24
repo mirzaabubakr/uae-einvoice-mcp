@@ -1,7 +1,8 @@
 /**
  * UAE e-invoicing mandate timeline and high-level requirements.
- * Based on Cabinet Decision / Ministerial Decisions (MD 243 & 244 of 2025)
- * and MoF Electronic Invoicing Guidelines (v1.0, Feb 2026).
+ * Based on Ministerial Decisions 243 & 244 of 2025, as amended by MD 66 of 2026
+ * (ASP deadline) and MD 197 of 2026 (exclusions, storage, system failure),
+ * and MoF Electronic Invoicing Guidelines v1.1 (June 2026).
  *
  * Dates can shift — treat this as guidance and verify against official MoF/FTA notices.
  */
@@ -27,6 +28,8 @@ export interface RequirementsResult {
   segment: BusinessSegment;
   phases: MandatePhase[];
   technicalBaseline: string[];
+  excludedTransactions: string[];
+  regulatoryUpdates: string[];
   keyIdentifiers: Record<string, string>;
   nextActions: string[];
 }
@@ -40,8 +43,9 @@ const PHASES: MandatePhase[] = [
     goLiveDate: "2027-01-01",
     notes: [
       "Appoint a Ministry of Finance Accredited Service Provider (ASP) by the appointment deadline.",
+      "ASP deadline was extended from 31 July 2026 to 30 October 2026 by MD 66 of 2026; go-live date unchanged.",
       "Mandatory electronic invoicing via Peppol / PINT AE from go-live.",
-      "Pilot / early adoption window opened in 2026 via EmaraTax.",
+      "Pilot and voluntary implementation opened on 1 July 2026 via EmaraTax.",
     ],
   },
   {
@@ -59,10 +63,10 @@ const PHASES: MandatePhase[] = [
     segment: "government",
     label: "Government entities",
     revenueThresholdAed: null,
-    aspAppointmentDeadline: "2027-10-01",
+    aspAppointmentDeadline: "2027-03-31",
     goLiveDate: "2027-10-01",
     notes: [
-      "Government entities follow a later mandatory wave (verify current MD / circulars).",
+      "Transactions by government entities in a sovereign capacity that do not compete with the private sector are excluded.",
     ],
   },
 ];
@@ -75,7 +79,26 @@ const TECHNICAL_BASELINE = [
   "Seller electronic address / participant ID uses scheme 0235 + 10-digit TIN (first 10 digits of TRN).",
   "Currency and amounts must be consistent; DocumentCurrencyCode is typically AED for domestic supplies.",
   "Invoice type codes commonly include 380 (invoice) and 381 (credit note).",
+  "Electronic invoices and credit notes must be issued and transmitted within 14 business days of the business transaction.",
+  "PINT AE Billing v1.0.4 (released 2 June 2026); ASPs were asked to align with Tax Data Document v1.0.4 by 4 August 2026.",
   "Validate against UBL 2.1 XSD and PINT AE Schematron rules before transmission.",
+];
+
+const EXCLUDED_TRANSACTIONS = [
+  "Government entity transactions in a sovereign capacity that do not compete with the private sector.",
+  "International passenger air transport where an electronic ticket is issued, plus ancillary services under an Electronic Miscellaneous Document.",
+  "International air cargo where an airway bill is issued (24 months from the system's effective date).",
+  "Financial services that are VAT-exempt or zero-rated under Article 42 of the VAT Executive Regulation.",
+  "Transactions between members of the same VAT Tax Group (24 months starting 1 January 2027).",
+  "Excluded transactions may still be e-invoiced voluntarily; the full rules then apply except penalties.",
+];
+
+const REGULATORY_UPDATES = [
+  "2026-05-10 — MD 66 of 2026: ASP appointment deadline for revenue ≥ AED 50M moved from 31 July 2026 to 30 October 2026; 1 January 2027 go-live unchanged.",
+  "2026-06-01 — MoF Electronic Invoicing Guidelines v1.1: storage and advance-payment / retention clarifications; mandatory field counts unchanged (51 tax / 49 commercial).",
+  "2026-10-01 — MD 197 of 2026 (announced 19 October 2026): 24-month exclusion for intra-Tax-Group transactions from 1 January 2027.",
+  "2026-10-01 — MD 197 of 2026: e-invoice data no longer has to be stored inside the UAE; records must be retained per the Tax Procedures Law and producible to the FTA.",
+  "2026-10-01 — MD 197 of 2026: 'System Failure' provisions repealed, including the duty to notify the FTA within two business days.",
 ];
 
 export function getEinvoicingRequirements(
@@ -94,7 +117,7 @@ export function getEinvoicingRequirements(
 
   const primary = phases[0];
   const nextActions: string[] = [
-    "Confirm whether your entity is in scope under MD 243/244 of 2025.",
+    "Confirm whether your entity is in scope under MD 243/244 of 2025 (as amended), including the excluded-transaction list.",
     "Obtain or verify your TIN (first 10 digits of your TRN) in EmaraTax.",
     "Shortlist and appoint an MoF Accredited Service Provider before your appointment deadline.",
     "Map ERP invoice fields to the PINT AE data dictionary (51 tax-invoice fields).",
@@ -108,12 +131,14 @@ export function getEinvoicingRequirements(
   }
 
   return {
-    asOf: "2026-09-08",
+    asOf: "2026-10-24",
     disclaimer:
       "Informational summary only — not legal or tax advice. Verify dates and obligations against official UAE MoF / FTA publications.",
     segment: resolved,
     phases,
     technicalBaseline: TECHNICAL_BASELINE,
+    excludedTransactions: EXCLUDED_TRANSACTIONS,
+    regulatoryUpdates: REGULATORY_UPDATES,
     keyIdentifiers: {
       TRN: "15-digit Tax Registration Number (VAT)",
       TIN: "First 10 digits of TRN — Peppol endpoint identifier body",
